@@ -1,32 +1,38 @@
-# Interop Test Runner
-
-The Interop Test Runner aims to automatically generate an interop matrix by running multiple **test cases** using different QUIC implementations.
+# QUIC Runner
+This project takes sources from the work in the following papers:
 
 * Research Article: [Automating QUIC Interoperability Testing](https://dl.acm.org/doi/10.1145/3405796.3405826)
 * IETF Blog Post: [Automating interoperability testing to improve open standards for the Internet](https://www.ietf.org/blog/quic-automated-interop-testing/)
 
-## Requirements
+## Setting Up
 
-The Interop Runner is written in Python 3. You'll need to install the
-following softwares to run the interop test:
-
-* Python3 modules. Run the following command:
+* Install Python3 modules. Run the following command:
 
    ```bash
-   pip3 install -r requirements.txt
+   uv init
+   uv venv
+   source .venv/bin/activate
+   uv pip3 install -r requirements.txt
    ```
 
 * [Docker](https://docs.docker.com/engine/install/) and [docker compose](https://docs.docker.com/compose/).
 
 * [Development version of Wireshark](https://www.wireshark.org/download.html) (version 4.5.0 or newer).
 
-## Running the Interop Runner
+## Running Tests across Implementations
+The run module will compile a list of compatible (client, server) combinations from its list of available
+QUIC imoplementations. Then, for each combination, it runs the test cases and outputs to a specified log
+directory.
 
-Run the interop tests:
+Note: The log directory needs to be created by the program. We cannot specify an existing directory.
 
+Example of running the handshake test for all QUIC combinations:
 ```bash
-python3 run.py
+python3 run.py -l logs/ -t handshake -j trial.json
 ```
+## Adding a Test Case
+
+# Original Documentation from the OG Repository
 
 ## IPv6 support
 
@@ -107,4 +113,4 @@ Currently disabled due to #20.
 
 * **Address Rebinding** (`rebind-addr`): In this test case, a NAT is simulated that changes the client IP address (as observed by the server) after the handshake. Server should perform path vaildation.
 
-* **Connection Migratioon** (`connectionmigration`): In this test case, the server is expected to provide its preferred addresses to the client during the handshake. The client is expected to perform active migration to one of those addresses.
+* **Connection Migration** (`connectionmigration`): In this test case, the server is expected to provide its preferred addresses to the client during the handshake. The client is expected to perform active migration to one of those addresses.

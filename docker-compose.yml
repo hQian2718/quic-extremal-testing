@@ -1,3 +1,5 @@
+version: "3.8"
+
 services:
   sim:
     image: martenseemann/quic-network-simulator
@@ -17,11 +19,11 @@ services:
       leftnet:
         ipv4_address: 193.167.0.2
         ipv6_address: fd00:cafe:cafe:0::2
-        interface_name: eth0
+        # interface_name: eth0
       rightnet:
         ipv4_address: 193.167.100.2
         ipv6_address: fd00:cafe:cafe:100::2
-        interface_name: eth1
+        # interface_name: eth1
     extra_hosts:
       - "server:193.167.100.100"
 
@@ -51,7 +53,7 @@ services:
       rightnet:
         ipv4_address: 193.167.100.100
         ipv6_address: fd00:cafe:cafe:100::100
-        interface_name: eth0
+        # interface_name: eth0
     extra_hosts:
       - "server4:193.167.100.100"
       - "server6:fd00:cafe:cafe:100::100"
@@ -83,7 +85,7 @@ services:
       leftnet:
         ipv4_address: 193.167.0.100
         ipv6_address: fd00:cafe:cafe:0::100
-        interface_name: eth0
+        # interface_name: eth0
     extra_hosts:
       - "server4:193.167.100.100"
       - "server6:fd00:cafe:cafe:100::100"
@@ -107,6 +109,7 @@ services:
       rightnet:
         ipv4_address: 193.167.100.110
         ipv6_address: fd00:cafe:cafe:100::110
+        # interface_name: eth0
     extra_hosts:
       - "client4:193.167.0.90"
       - "client6:fd00:cafe:cafe:0::100"
@@ -129,6 +132,7 @@ services:
       leftnet:
         ipv4_address: 193.167.0.90
         ipv6_address: fd00:cafe:cafe:0::90
+        # interface_name: eth0
     extra_hosts:
       - "server4:193.167.100.110"
       - "server6:fd00:cafe:cafe:100::110"
@@ -154,4 +158,3 @@ networks:
       config:
         - subnet: 193.167.100.0/24
         - subnet: fd00:cafe:cafe:100::/64
-
