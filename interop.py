@@ -128,7 +128,8 @@ class InteropRunner:
             "SERVER="
             + self._implementations[name]["image"]
             + " "  # only needed so docker compose doesn't complain
-            "docker compose --env-file empty.env up --timeout 0 --abort-on-container-exit -V sim client"
+            "docker compose --env-file empty.env up --timeout 0 --abort-on-container-exit -V sim "
+            + ("local_client" if name.find("local")!= -1 else "client")
         )
         output = subprocess.run(
             cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
@@ -154,7 +155,8 @@ class InteropRunner:
             + self._implementations[name]["image"]
             + " "  # only needed so docker compose doesn't complain
             "SERVER=" + self._implementations[name]["image"] + " "
-            "docker compose --env-file empty.env up -V server"
+            "docker compose --env-file empty.env up -V "
+            + ("local_server" if name.find("local")!= -1 else "server")
         )
         output = subprocess.run(
             cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
@@ -411,7 +413,12 @@ class InteropRunner:
             'REQUESTS="' + reqs + '" '
         ).format(testcase.scenario())
         params += " ".join(testcase.additional_envs())
-        containers = "sim client server " + " ".join(testcase.additional_containers())
+
+        containers = "sim"
+        containers += " local_client" if client.find("local")!= -1 else " client"
+        containers += " local_server" if server.find("local")!= -1 else " server"
+        containers += " " + " ".join(testcase.additional_containers())
+        
         cmd = (
             params
             + " docker compose --env-file empty.env up --abort-on-container-exit --timeout 1 "

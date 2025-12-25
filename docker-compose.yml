@@ -92,6 +92,75 @@ services:
       - "server46:193.167.100.100"
       - "server46:fd00:cafe:cafe:100::100"
 
+  local_client:
+    build:
+      context: ./aioquic_mutator
+    image: $CLIENT
+    container_name: local_client
+    hostname: local_client
+    stdin_open: true
+    tty: true
+    volumes:
+      - $DOWNLOADS:/downloads:delegated
+      - $CERTS:/certs:ro
+    environment:
+      - CRON=$CRON
+      - ROLE=client
+      - CLIENT_PARAMS=$CLIENT_PARAMS
+      - SSLKEYLOGFILE=/logs/keys.log
+      - QLOGDIR=/logs/qlog/
+      - TESTCASE=$TESTCASE_CLIENT
+      - REQUESTS=$REQUESTS
+    depends_on:
+      - sim
+    cap_add:
+      - NET_ADMIN
+    ulimits:
+      memlock: 67108864
+    networks:
+      leftnet:
+        ipv4_address: 193.167.0.100
+        ipv6_address: fd00:cafe:cafe:0::100
+        # interface_name: eth0
+    extra_hosts:
+      - "server4:193.167.100.100"
+      - "server6:fd00:cafe:cafe:100::100"
+      - "server46:193.167.100.100"
+      - "server46:fd00:cafe:cafe:100::100"
+
+  local_server:
+    build:
+      context: ./aioquic_mutator
+    image: $SERVER
+    container_name: local_server
+    hostname: local_server
+    stdin_open: true
+    tty: true
+    volumes:
+      - $WWW:/www:ro
+      - $CERTS:/certs:ro
+    environment:
+      - CRON=$CRON
+      - ROLE=server
+      - SERVER_PARAMS=$SERVER_PARAMS
+      - SSLKEYLOGFILE=/logs/keys.log
+      - QLOGDIR=/logs/qlog/
+      - TESTCASE=$TESTCASE_SERVER
+    depends_on:
+      - sim
+    cap_add:
+      - NET_ADMIN
+    ulimits:
+      memlock: 67108864
+    networks:
+      rightnet:
+        ipv4_address: 193.167.100.100
+        ipv6_address: fd00:cafe:cafe:100::100
+        # interface_name: eth0
+    extra_hosts:
+      - "server4:193.167.100.100"
+      - "server6:fd00:cafe:cafe:100::100"
+  
   iperf_server:
     image: martenseemann/quic-interop-iperf-endpoint
     container_name: iperf_server
