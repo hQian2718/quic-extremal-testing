@@ -128,7 +128,7 @@ class InteropRunner:
             "SERVER="
             + self._implementations[name]["image"]
             + " "  # only needed so docker compose doesn't complain
-            "docker compose --env-file empty.env up --timeout 0 --abort-on-container-exit -V sim "
+            "docker compose --env-file empty.env up --timeout 0 --abort-on-container-exit -V --remove-orphans sim "
             + ("local_client" if name.find("local")!= -1 else "client")
         )
         output = subprocess.run(
@@ -155,7 +155,7 @@ class InteropRunner:
             + self._implementations[name]["image"]
             + " "  # only needed so docker compose doesn't complain
             "SERVER=" + self._implementations[name]["image"] + " "
-            "docker compose --env-file empty.env up -V "
+            "docker compose --env-file empty.env up -V --remove-orphans "
             + ("local_server" if name.find("local")!= -1 else "server")
         )
         output = subprocess.run(
