@@ -53,6 +53,8 @@ services:
       rightnet:
         ipv4_address: 193.167.100.100
         ipv6_address: fd00:cafe:cafe:100::100
+        aliases:
+          - server
         # interface_name: eth0
     extra_hosts:
       - "server4:193.167.100.100"
@@ -94,7 +96,8 @@ services:
 
   local_client:
     build:
-      context: ./aioquic_mutator
+      context: ../quic_with_mutator
+      dockerfile: docker/Dockerfile
     image: $CLIENT
     container_name: local_client
     hostname: local_client
@@ -130,7 +133,8 @@ services:
 
   local_server:
     build:
-      context: ./aioquic_mutator
+      context: ../quic_with_mutator
+      dockerfile: docker/Dockerfile
     image: $SERVER
     container_name: local_server
     hostname: local_server
@@ -156,6 +160,8 @@ services:
       rightnet:
         ipv4_address: 193.167.100.101
         ipv6_address: fd00:cafe:cafe:100::101
+        aliases:
+          - server
         # interface_name: eth0
     extra_hosts:
       - "server4:193.167.100.100"

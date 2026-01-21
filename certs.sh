@@ -2,13 +2,14 @@
 
 set -e
 
-if [ -z "$1" ] || [ -z "$2" ]; then
-  echo "$0 <cert dir> <chain length>"
+if [ -z "$1" ] || [ -z "$2" ] || [ -z "$3" ]; then
+  echo "$0 <cert dir> <chain length> <cert config file"
   exit 1
 fi
 
 CERTDIR=$1
 CHAINLEN=$2
+CERTCONFIG=$3
 
 mkdir -p "$CERTDIR" || true
 
@@ -17,7 +18,7 @@ openssl ecparam -name prime256v1 -genkey -out "$CERTDIR"/ca_0.key
 openssl req -x509 -sha256 -nodes -days 10 -key "$CERTDIR"/ca_0.key \
   -out "$CERTDIR"/cert_0.pem \
   -subj "/O=interop runner Root Certificate Authority/" \
-  -config cert_config.txt \
+  -config "$CERTCONFIG" \
   -extensions v3_ca \
   2>/dev/null
 
@@ -46,7 +47,7 @@ for i in $(seq 1 "$CHAINLEN"); do
   if [[ $i < "$CHAINLEN" ]]; then
     openssl x509 -req -sha256 -days 10 -in "$CERTDIR"/cert.csr -out "$CERTDIR"/cert_"$i".pem \
       -CA "$CERTDIR"/cert_"$j".pem -CAkey "$CERTDIR"/ca_"$j".key -CAcreateserial \
-      -extfile cert_config.txt \
+      -extfile "$CERTCONFIG" \
       -extensions v3_ca \
       2>/dev/null
   else

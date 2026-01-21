@@ -9,15 +9,18 @@ import subprocess
 import sys
 import tempfile
 from datetime import datetime
+from pathlib import Path
 from typing import Callable, List, Tuple
 
 import prettytable
 from termcolor import colored
 
-import testcases
-from result import TestResult
-from testcases import Perspective
+from interop_testing import testcases
+from interop_testing.result import TestResult
+from .testcases import Perspective
 
+DOCKER_COMPOSE_FILE = (Path(__file__).parent / "docker-compose.yml").resolve()
+EMPTY_ENV_FILE = (Path(__file__).parent / "empty.env").resolve()
 
 class MeasurementResult:
     result = TestResult
@@ -128,7 +131,11 @@ class InteropRunner:
             "SERVER="
             + self._implementations[name]["image"]
             + " "  # only needed so docker compose doesn't complain
-            "docker compose --env-file empty.env up --timeout 0 --abort-on-container-exit -V --remove-orphans sim "
+            "docker compose" + " "
+            + "--env-file" + " " +  str(EMPTY_ENV_FILE) + " "
+            + "-f " + str(DOCKER_COMPOSE_FILE) + " "
+            + "up --timeout 0 --abort-on-container-exit -V --remove-orphans "
+            + "sim "
             + ("local_client" if name.find("local")!= -1 else "client")
         )
         output = subprocess.run(
@@ -155,7 +162,10 @@ class InteropRunner:
             + self._implementations[name]["image"]
             + " "  # only needed so docker compose doesn't complain
             "SERVER=" + self._implementations[name]["image"] + " "
-            "docker compose --env-file empty.env up -V --remove-orphans "
+            "docker compose" + " "
+            + "--env-file" + " " +  str(EMPTY_ENV_FILE) + " "
+            + "-f " + str(DOCKER_COMPOSE_FILE) + " "
+            + "up --timeout 0 --abort-on-container-exit -V --remove-orphans " 
             + ("local_server" if name.find("local")!= -1 else "server")
         )
         output = subprocess.run(
@@ -421,7 +431,10 @@ class InteropRunner:
         
         cmd = (
             params
-            + " docker compose --env-file empty.env up --abort-on-container-exit --timeout 1 "
+            + " docker compose --env-file " 
+            + str(EMPTY_ENV_FILE) + " "
+            + "-f " + str(DOCKER_COMPOSE_FILE) + " up "
+            + " --abort-on-container-exit --timeout 1 "
             + containers
         )
         logging.debug("Command: %s", cmd)
@@ -447,7 +460,9 @@ class InteropRunner:
         if expired:
             logging.debug("Test failed: took longer than %ds.", testcase.timeout())
             r = subprocess.run(
-                "docker compose --env-file empty.env stop " + containers,
+                params 
+                + "docker compose --env-file " + str(EMPTY_ENV_FILE) + " "
+                + "-f " + str(DOCKER_COMPOSE_FILE) + " stop " + containers,
                 shell=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
@@ -456,15 +471,19 @@ class InteropRunner:
             logging.debug("%s", r.stdout.decode("utf-8", errors="replace"))
 
         # copy the pcaps from the simulator
+        # Use correct container names for local-mutator tests
+        client_container = "local_client" if client.find("local") != -1 else "client"
+        server_container = "local_server" if server.find("local") != -1 else "server"
         self._copy_logs("sim", sim_log_dir)
-        self._copy_logs("client", client_log_dir)
-        self._copy_logs("server", server_log_dir)
+        self._copy_logs(client_container, client_log_dir)
+        self._copy_logs(server_container, server_log_dir)
 
         if not expired:
             lines = output.splitlines()
             if self._is_unsupported(lines):
                 status = TestResult.UNSUPPORTED
-            elif any("client exited with code 0" in str(line) for line in lines):
+            elif any("client exited with code 0" in str(line) for line in lines) or \
+                 any("local_client exited with code 0" in str(line) for line in lines):
                 try:
                     status = testcase.check()
                 except FileNotFoundError as e:

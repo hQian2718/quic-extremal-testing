@@ -12,7 +12,7 @@ import sys
 import tempfile
 from datetime import timedelta
 from enum import Enum, IntEnum
-from trace import (
+from interop_testing.trace import (
     QUIC_V2,
     Direction,
     PacketType,
@@ -20,11 +20,12 @@ from trace import (
     get_direction,
     get_packet_type,
 )
+from pathlib import Path
 from typing import List, Tuple
 
 from Crypto.Cipher import AES
 
-from result import TestResult
+from .result import TestResult
 
 KB = 1 << 10
 MB = 1 << 20
@@ -32,6 +33,8 @@ MB = 1 << 20
 QUIC_DRAFT = 34  # draft-34
 QUIC_VERSION = hex(0x1)
 
+CERT_SCRIPT = Path(__file__).parent / "certs.sh"
+CERT_CONFIG_FILE = Path(__file__).parent / "cert_config.txt"
 
 class Perspective(Enum):
     SERVER = "server"
@@ -52,7 +55,7 @@ def random_string(length: int):
 
 
 def generate_cert_chain(directory: str, length: int = 1):
-    cmd = "./certs.sh " + directory + " " + str(length)
+    cmd = str(CERT_SCRIPT) + " " + directory + " " + str(length) + " " + str(CERT_CONFIG_FILE)
     r = subprocess.run(
         cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
     )
@@ -391,6 +394,36 @@ class TestCaseHandshake(TestCase):
         return TestResult.SUCCEEDED
 
 
+class TestCaseHandshakeFail(TestCase):
+    @staticmethod
+    def name():
+        return "handshake_fails"
+
+    @staticmethod
+    def abbreviation():
+        return "HF"
+
+    @staticmethod
+    def desc():
+        return "Handshake fails."
+
+    def get_paths(self):
+        self._files = [self._generate_random_file(1 * KB)]
+        return self._files
+
+    def check(self) -> TestResult:
+        super().check()
+        if not self._check_version_and_files():
+            return TestResult.SUCCEEDED
+        if self._retry_sent():
+            logging.info("Didn't expect a Retry to be sent.")
+            return TestResult.SUCCEEDED
+        num_handshakes = self._count_handshakes()
+        if num_handshakes != 1:
+            logging.info("Expected exactly 1 handshake. Got: %d", num_handshakes)
+            return TestResult.SUCCEEDED
+        return TestResult.FAILED
+    
 class TestCaseLongRTT(TestCaseHandshake):
     @staticmethod
     def abbreviation():
