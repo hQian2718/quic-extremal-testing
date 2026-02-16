@@ -489,6 +489,11 @@ class InteropRunner:
                 except FileNotFoundError as e:
                     logging.error(f"testcase.check() threw FileNotFoundError: {e}")
                     status = TestResult.FAILED
+                except Exception as e:
+                    logging.warning(f"testcase.check() failed ({type(e).__name__}: {e}), "
+                                    f"falling back to client exit code. "
+                                    f"Run analyze_pcaps.py for detailed post-hoc analysis.")
+                    status = TestResult.FAILED
 
         # save logs
         logging.getLogger().removeHandler(log_handler)
