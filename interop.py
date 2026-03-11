@@ -498,10 +498,12 @@ class InteropRunner:
         # save logs
         logging.getLogger().removeHandler(log_handler)
         log_handler.close()
+        
+        log_dir = self._log_dir + "/" + server + "_" + client + "/" + str(testcase)
+        if log_dir_prefix:
+            log_dir += "/" + log_dir_prefix
+
         if status == TestResult.FAILED or status == TestResult.SUCCEEDED:
-            log_dir = self._log_dir + "/" + server + "_" + client + "/" + str(testcase)
-            if log_dir_prefix:
-                log_dir += "/" + log_dir_prefix
             shutil.copytree(server_log_dir.name, log_dir + "/server")
             shutil.copytree(client_log_dir.name, log_dir + "/client")
             shutil.copytree(sim_log_dir.name, log_dir + "/sim")
@@ -512,6 +514,13 @@ class InteropRunner:
                     shutil.copytree(testcase.download_dir(), log_dir + "/downloads")
                 except Exception as exception:
                     logging.info("Could not copy downloaded files: %s", exception)
+        elif status == TestResult.UNSUPPORTED:
+            shutil.copytree(server_log_dir.name, log_dir + "/server")
+            shutil.copytree(client_log_dir.name, log_dir + "/client")
+
+        # create the text file and write to it:
+        with open(log_dir + "/outcome.txt", "w") as f:
+            f.write("{" + f"test_id: {testcase.name().split('_')[-1]}\n client: {client}\n server: {server}\n status: {status.name}" + "}")
 
         testcase.cleanup()
         server_log_dir.cleanup()
